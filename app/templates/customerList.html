@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<form action="/api/customer/add/" method="post">
+    身份证: <input type="text" name="customerID" value=""><br>
+    姓名: <input type="text" name="customerName" value=""><br>
+    手机: <input type="text" name="customerPhone" value=""><br>
+    住址: <input type="text" name="customerAdress" value=""><br>
+    联系人姓名: <input type="text" name="contactName" value=""><br>
+    联系人电话: <input type="text" name="contactPhone" value=""><br>
+    联系人邮箱: <input type="text" name="contactMail" value=""><br>
+    与联系人关系: <input type="text" name="userContactRelation" value=""><br>
+    <input type="submit" value="提交">
+</form>
+
+<table border="1">
+    <tr>
+        <th>身份证</th>
+        <th>姓名</th>
+        <th>电话</th>
+        <th>住址</th>
+        <th>联系人</th>
+        <th>联系人电话</th>
+        <th>联系人邮箱</th>
+        <th>与联系人关系</th>
+        <th>操作</th>
+    </tr>
+    {% for item in dataList %}
+        <tr>
+            <td>{{ item.customerID }}</td>
+            <td>{{ item.customerName }}</td>
+            <td>{{ item.customerPhone }}</td>
+            <td>{{ item.customerAdress }}</td>
+            <td>{{ item.contactName }}</td>
+            <td>{{ item.contactPhone }}</td>
+            <td>{{ item.contactMail }}</td>
+            <td>{{ item.userContactRelation }}</td>
+            <td>
+                <a href="/customer/edit/{{ item.customerID }}" class="button">修改</a>
+
+                <a href="/customer/delete/{{ item.customerID }}" class="button">删除</a>
+
+                <a href="/customer/createAccount/{{ item.customerID }}" class="button">创建账户</a>
+
+            </td>
+        </tr>
+    {% endfor %}
+
+</table>
+{% endblock %}

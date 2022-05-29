@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<p>身份证:{{ customer[0].customerID }}</p>
+<form action="/api/customer/edit/{{ customer[0].customerID }}" method="post">
+    姓名: <input type="text" name="customerName" value="{{ customer[0].customerName }}"><br>
+    手机: <input type="text" name="customerPhone" value="{{ customer[0].customerPhone }}"><br>
+    住址: <input type="text" name="customerAdress" value="{{ customer[0].customerAdress }}"><br>
+    联系人姓名: <input type="text" name="contactName" value="{{ customer[0].contactName }}"><br>
+    联系人电话: <input type="text" name="contactPhone" value="{{ customer[0].contactPhone }}"><br>
+    联系人邮箱: <input type="text" name="contactMail" value="{{ customer[0].contactMail }}"><br>
+    与联系人关系: <input type="text" name="userContactRelation" value="{{ customer[0].userContactRelation }}"><br>
+    <input type="submit" value="提交">
+</form>
+
+{% endblock %}
