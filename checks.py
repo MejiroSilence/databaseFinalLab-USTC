@@ -36,3 +36,16 @@ def customerCheck(data):
         return 'userContactRelation too long, limit: 20'
     return ''
     
+def checkAccountCheck(form):
+    try:
+        number = float(form['overdraft'])
+    except ValueError:
+        return False
+    return True
+
+def depositaAccountCheck(form):
+    try:
+        number = float(form['interestRate'])
+    except ValueError:
+        return False
+    return True

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form action="/api/customer/createAccount/{{ ID }}" method="post">
+    <label>账户类型</label>
+    <select name="type">
+        <option value="check">check</option>
+        <option value="deposita">deposita</option>
+    </select>
+
+    <label>开户银行</label>
+    <select name="bank">
+        {% for bank in banks %}
+        <option value="{{ bank.bankName }}">{{ bank.bankName }}</option>
+        {% endfor %}
+    </select>
+
+    <p>If you need to create a check account, please fill out the overdraft bellow.</p>
+    透支额: <input type="text" name="overdraft" value="114514"><br>
+
+    <p>If you need to create a deposita account, please fill out the Interest Rate and Currency Type bellow.</p>
+    利率: <input type="text" name="interestRate" value="0.1919810"><br>
+    货币类型: <input type="text" name="currencyType" value="CNY"><br>
+
+    <input type="submit" value="提交">
+</form>
+
+{% endblock %}
