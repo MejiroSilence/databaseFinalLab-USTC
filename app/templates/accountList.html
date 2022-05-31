@@ -24,6 +24,11 @@
             <td>{{ item.overdraft }}</td>
             <td>
                 <a href="/account/addCustomer/check/{{ item.accountID }}" class="button">添加关联用户</a>
+
+                <input type="button" name="delete1" value="取消关联" onclick="delete1( &quot;{{ item.accountID }}&quot; , &quot;{{ ID }}&quot; )"/>
+
+
+                <a href="/account/edit/check/{{ item.accountID }}" class="button">修改信息</a>
             </td>
         </tr>
     {% endfor %}
@@ -54,10 +59,38 @@
             <td>{{ item.currencyType }}</td>
             <td>
                 <a href="/account/addCustomer/deposita/{{ item.accountID }}" class="button">添加关联用户</a>
+
+                <input type="button" name="delete1" value="取消关联" onclick="delete2( &quot;{{ item.accountID }}&quot; , &quot;{{ ID }}&quot; )"/>
+
+                <a href="/account/edit/deposita/{{ item.accountID }}" class="button">修改信息</a>
             </td>
         </tr>
     {% endfor %}
 
 </table>
+
+<script language="javascript">
+function delete2(accountID_,CustomerID_,){
+var httpRequest = new XMLHttpRequest();
+httpRequest.open('POST', '/api/account/deleteCustomer', true);
+httpRequest.setRequestHeader("Content-type","application/json");
+var obj = {type: "deposita", accountID: accountID_, customerID: CustomerID_ };
+httpRequest.send(JSON.stringify(obj));
+httpRequest.onreadystatechange = function () {//请求后的回调接口，可将请求成功后要执行的程序写在其中
+    location.reload();
+};
+};
+
+function delete1(accountID_,CustomerID_,){
+var httpRequest = new XMLHttpRequest();
+httpRequest.open('POST', '/api/account/deleteCustomer', true);
+httpRequest.setRequestHeader("Content-type","application/json");
+var obj = {type: "check", accountID: accountID_, customerID: CustomerID_ };
+httpRequest.send(JSON.stringify(obj));
+httpRequest.onreadystatechange = function () {//请求后的回调接口，可将请求成功后要执行的程序写在其中
+    location.reload();
+};
+};
+</script>
 
 {% endblock %}

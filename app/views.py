@@ -157,7 +157,7 @@ def accountList(ID):
     cursor.close()
     db.close()
     return render_template(
-        "accountList.html", checkList=checkData, depositaList=depositaData
+        "accountList.html", checkList=checkData, depositaList=depositaData, ID=ID
     )
 
 
@@ -469,3 +469,77 @@ def customerDelete(ID):
     db.close()
     return redirect("/customer/list")
 
+
+@app.route("/api/account/deleteCustomer", methods=["POST"])
+def apiAccountDelete():  # TODO:
+    json = request.get_json()
+    type = json["type"]
+    if type == "check":
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        try:
+            cursor.execute(
+                "delete from customerCheck where accountID=%s and customerID=%s",
+                (json["accountID"], json["customerID"]),
+            )
+        except:
+            traceback.print_exc()
+            db.rollback()
+            flash("error at line 487")
+            return {"code": 487}
+        else:
+            flash("成功")
+            cursor.execute(
+                "select * from customerCheck where accountID=%s", (json["accountID"])
+            )
+            if cursor.fetchall():
+                db.commit()
+                cursor.close()
+                db.close()
+                return {"code": 200}
+            else:
+                cursor.execute(
+                    "delete from checkAccount where accountID=%s", (json["accountID"])
+                )
+                db.commit()
+                cursor.close()
+                db.close()
+                return {"code": 201}
+
+    elif type == "deposita":
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        try:
+            cursor.execute(
+                "delete from customerDeposit where accountID=%s and customerID=%s",
+                (json["accountID"], json["customerID"]),
+            )
+        except:
+            traceback.print_exc()
+            db.rollback()
+            flash("error at line 487")
+            return {"code": 487}
+        else:
+            flash("成功")
+            cursor.execute(
+                "select * from customerDeposit where accountID=%s", (json["accountID"])
+            )
+            if cursor.fetchall():
+                db.commit()
+                cursor.close()
+                db.close()
+                return {"code": 200}
+            else:
+                cursor.execute(
+                    "delete from depositAccount where accountID=%s", (json["accountID"])
+                )
+                db.commit()
+                cursor.close()
+                db.close()
+                return {"code": 201}
+    else:
+        return {"code": 545}
