@@ -23,22 +23,33 @@ def customerList():
     return render_template("customerList.html", dataList=dataList)
 
 
-@app.route("/customer/search", methods=["GET"])
+@app.route("/customer/search", methods=["GET", "POST"])
 def customerSearch():
-    return render_template("customerSearch.html")
-
-
-@app.route("/api/customer/search", methods=["POST"])  # TODO:
-def apiCustomerSearch():
-    db = pymysql.connect(
-        host="localhost", user="root", password="114514", database="banksys"
-    )
-    cursor = db.cursor(pymysql.cursors.DictCursor)
-    sql = "select * from customer where customerID like %s and customerName like %s and customerPhone like %s and customerAdress like %s"
-    customerID = "%"
-    customerName = "%"
-    customerPhone = "%"
-    customerAdress = "%"
+    if request.method == "GET":
+        return render_template("customerSearch.html")
+    elif request.method == "POST":
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        sql = "select * from customer where customerID like %s and customerName like %s and customerPhone like %s and customerAdress like %s"
+        customerID = "%"
+        customerName = "%"
+        customerPhone = "%"
+        customerAdress = "%"
+        if request.form["customerID"]:
+            customerID = "%" + request.form["customerID"] + "%"
+        if request.form["customerName"]:
+            customerName = "%" + request.form["customerName"] + "%"
+        if request.form["customerPhone"]:
+            customerPhone = "%" + request.form["customerPhone"] + "%"
+        if request.form["customerAdress"]:
+            customerAdress = "%" + request.form["customerAdress"] + "%"
+        cursor.execute(sql, (customerID, customerName, customerPhone, customerAdress))
+        datalist = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return render_template("customerSearch.html", dataList=datalist)
 
 
 @app.route("/customer/edit/<string:ID>", methods=["GET"])

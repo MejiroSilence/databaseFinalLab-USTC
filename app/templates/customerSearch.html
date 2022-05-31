@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<form action="/api/customer/search" method="post">
+<form action="/customer/search" method="post">
     <input type="text" name="customerID" placeholder="身份证">
     <br>
     <input type="text" name="customerName" placeholder="姓名">
@@ -11,5 +11,40 @@
     <input type="text" name="customerAdress" placeholder="地址">
     <input type="submit" value="提交">
 </form>
+<h1>查询结果</h1>
+<table border="1">
+    <tr>
+        <th>身份证</th>
+        <th>姓名</th>
+        <th>电话</th>
+        <th>住址</th>
+        <th>联系人</th>
+        <th>联系人电话</th>
+        <th>联系人邮箱</th>
+        <th>与联系人关系</th>
+        <th>操作</th>
+    </tr>
+    {% for item in dataList %}
+        <tr>
+            <td>{{ item.customerID }}</td>
+            <td>{{ item.customerName }}</td>
+            <td>{{ item.customerPhone }}</td>
+            <td>{{ item.customerAdress }}</td>
+            <td>{{ item.contactName }}</td>
+            <td>{{ item.contactPhone }}</td>
+            <td>{{ item.contactMail }}</td>
+            <td>{{ item.userContactRelation }}</td>
+            <td>
+                <a href="/customer/edit/{{ item.customerID }}" class="button">修改</a>
+
+                <a href="/customer/delete/{{ item.customerID }}" class="button">删除</a>
+
+                <a href="/customer/createAccount/{{ item.customerID }}" class="button">创建账户</a>
+
+            </td>
+        </tr>
+    {% endfor %}
+
+</table>
 
 {% endblock %}
