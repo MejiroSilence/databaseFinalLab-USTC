@@ -2,6 +2,10 @@
 
 {% block content %}
 
+<form method="get" action="/customer/search">
+    <button type="submit">查询</button>
+</form>
+
 <form action="/api/customer/add/" method="post">
     身份证: <input type="text" name="customerID" value=""><br>
     姓名: <input type="text" name="customerName" value=""><br>

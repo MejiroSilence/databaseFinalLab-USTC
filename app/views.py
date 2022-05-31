@@ -1,4 +1,5 @@
 import json
+import traceback
 from flask import render_template, flash, redirect,jsonify,request
 from matplotlib import dviread
 from app import app
@@ -15,6 +16,14 @@ def customerList():
     cursor.close()
     db.close()
     return render_template('customerList.html',dataList=dataList)
+
+@app.route('/customer/search',methods=["GET"])
+def customerSearch():
+    return render_template('customerSearch.html')
+
+@app.route('/api/customer/search',methods=["POST"])#TODO:
+def apiCustomerSearch():
+    return 114
 
 @app.route("/customer/edit/<string:ID>", methods=["GET"])
 def customerEdit(ID):
@@ -117,6 +126,7 @@ def apiCustomerCreateAccount(ID):
                 flash('overdraft rate must be a digit!')
                 return redirect('/customer/createAccount/{0}'.format(ID))
         else:
+            traceback.print_exc()
             cursor.close()
             db.close()
             flash('no such bank!')
@@ -129,14 +139,14 @@ def apiCustomerCreateAccount(ID):
                     getRandID="""SELECT random_num
                                     FROM (
                                     SELECT FLOOR(RAND() * 999999) AS random_num 
-                                    FROM depositaAccount
+                                    FROM depositAccount
                                     UNION
                                     SELECT FLOOR(RAND() * 999999) AS random_num
                                     ) AS ss
-                                    WHERE "random_num" NOT IN (SELECT accountID FROM depositaAccount)
+                                    WHERE "random_num" NOT IN (SELECT accountID FROM depositAccount)
                                     LIMIT 1"""
-                    sql1='insert into depositaAccount (accountID , bankName , accountBalance , accountRegisterDate , interestRate , currencyType) values(%s,%s,%s,%s,%s,%s)'
-                    sql2='insert into customerDeposita (customerID , bankName , accountID , lastVisit) values(%s,%s,%s,%s)'
+                    sql1='insert into depositAccount (accountID , bankName , accountBalance , accountRegisterDate , interestRate , currencyType) values(%s,%s,%s,%s,%s,%s)'
+                    sql2='insert into customerDeposit (customerID , bankName , accountID , lastVisit) values(%s,%s,%s,%s)'
                     cursor.execute(getRandID)
                     accountID=cursor.fetchall()[0]['random_num'],
                     dt=datetime.datetime.now()
@@ -144,6 +154,7 @@ def apiCustomerCreateAccount(ID):
                     cursor.execute(sql1,(accountID,request.form['bank'],'0',date,request.form['interestRate'],request.form['currencyType']))
                     cursor.execute(sql2,(ID,request.form['bank'],accountID,date))
                 except:
+                    traceback.print_exc()
                     db.rollback()
                     cursor.close()
                     db.close()

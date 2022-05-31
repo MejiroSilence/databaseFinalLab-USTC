@@ -1,3 +1,3 @@
-# databaseFinalLab-USTC 
+# databaseFinalLab-USTC
 
-在学了在学了
+`python ./run.py`

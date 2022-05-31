@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form action="/api/customer/search" method="post">
+    <input type="text" name="customerID" placeholder="身份证">
+    <br>
+    <input type="submit" value="提交">
+</form>
+
+{% endblock %}
