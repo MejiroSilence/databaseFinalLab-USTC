@@ -52,3 +52,21 @@ def depositaAccountCheck(form):
     except ValueError:
         return False
     return True
+
+
+def checkAccountEditCheck(form):
+    try:
+        number = float(form["overdraft"])
+        number = float(form["accountBalance"])
+    except ValueError:
+        return False
+    return True
+
+
+def depositaAccountEditCheck(form):
+    try:
+        number = float(form["interestRate"])
+        number = float(form["accountBalance"])
+    except ValueError:
+        return False
+    return True

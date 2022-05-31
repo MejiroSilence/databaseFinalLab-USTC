@@ -11,6 +11,11 @@ from checks import *
 # TODO: check cursor.close db.close for each branch in each func
 
 
+@app.route("/", methods=["GET"])
+def index():
+    return redirect("/customer/list")
+
+
 @app.route("/customer/list", methods=["GET"])
 def customerList():
     db = pymysql.connect(
@@ -543,3 +548,155 @@ def apiAccountDelete():  # TODO:
                 return {"code": 201}
     else:
         return {"code": 545}
+
+
+@app.route("/account/edit/check/<string:ID>", methods=["GET"])
+def accountEditCheck(ID):
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("select * from checkAccount where accountID=%s", (ID))
+    data = cursor.fetchall()
+    cursor.close()
+    db.close()
+    return render_template("accountEditCheck.html", data=data[0])
+
+
+@app.route("/account/edit/deposita/<string:ID>", methods=["GET"])
+def accountEditDeposita(ID):
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("select * from depositAccount where accountID=%s", (ID))
+    data = cursor.fetchall()
+    cursor.close()
+    db.close()
+    return render_template("accountEditDeposita.html", data=data[0])
+
+
+@app.route("/api/account/edit/check/<string:ID>", methods=["POST"])
+def apiAccountEditCheck(ID):
+    if checkAccountEditCheck(request.form):
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        dt = datetime.datetime.now()
+        date = dt.strftime("""%Y-%m-%d""")
+        try:
+            cursor.execute(
+                "update checkAccount set accountBalance=%s,overdraft=%s where accountID=%s",
+                (request.form["accountBalance"], request.form["overdraft"], ID),
+            )
+            cursor.execute(
+                "update customerCheck set lastVisit=%s where accountID=%s", (date, ID)
+            )
+        except:
+            traceback.print_exc()
+            db.rollback()
+            cursor.close()
+            db.close()
+            flash("error 590")
+            return redirect("/account/edit/check/{0}".format(ID))
+        else:
+            flash("成功")
+            db.commit()
+            cursor.close()
+            db.close()
+            return redirect("/account/edit/check/{0}".format(ID))
+    else:
+        flash("error 598")
+        return redirect("/account/edit/check/{0}".format(ID))
+
+
+@app.route("/api/account/edit/deposita/<string:ID>", methods=["POST"])
+def apiAccountEditDeposita(ID):
+    if depositaAccountEditCheck(request.form):
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        dt = datetime.datetime.now()
+        date = dt.strftime("""%Y-%m-%d""")
+        try:
+            cursor.execute(
+                "update depositAccount set accountBalance=%s,interestRate=%s,currencyType=%s where accountID=%s",
+                (
+                    request.form["accountBalance"],
+                    request.form["interestRate"],
+                    request.form["currencyType"],
+                    ID,
+                ),
+            )
+            cursor.execute(
+                "update customerDeposit set lastVisit=%s where accountID=%s", (date, ID)
+            )
+        except:
+            traceback.print_exc()
+            db.rollback()
+            cursor.close()
+            db.close()
+            flash("error 634")
+            return redirect("/account/edit/deposita/{0}".format(ID))
+        else:
+            flash("成功")
+            db.commit()
+            cursor.close()
+            db.close()
+            return redirect("/account/edit/deposita/{0}".format(ID))
+    else:
+        flash("error 641")
+        return redirect("/account/edit/deposita/{0}".format(ID))
+
+
+@app.route("/account/search", methods=["GET", "POST"])
+def accountSearch():
+    if request.method == "GET":
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("select * from checkAccount")
+        check = cursor.fetchall()
+        cursor.execute("select * from depositAccount")
+        deposita = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return render_template(
+            "accountSearch.html", checkList=check, depositaList=deposita
+        )
+    elif request.method == "POST":
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        if request.form["type"] == "check":
+            cursor.execute(
+                "select * from checkAccount where accountID=%s",
+                (request.form["accountID"]),
+            )
+            check = cursor.fetchall()
+            deposita = []
+            cursor.close()
+            db.close()
+            return render_template(
+                "accountSearch.html", checkList=check, depositaList=deposita
+            )
+        elif request.form["type"] == "deposita":
+            cursor.execute(
+                "select * from depositAccount where accountID=%s",
+                (request.form["accountID"]),
+            )
+            deposita = cursor.fetchall()
+            check = []
+            cursor.close()
+            db.close()
+            return render_template(
+                "accountSearch.html", checkList=check, depositaList=deposita
+            )
+        else:
+            flash("error 694")
+            return redirect("/account/search")
+

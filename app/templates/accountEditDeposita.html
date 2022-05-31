@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<p>check account ID:{{ data.accountID }}</p>
+<form action="/api/account/edit/deposita/{{ data.accountID }}" method="post">
+    balance: <input type="text" name="accountBalance" value="{{ data.accountBalance }}"><br>
+    interestRate: <input type="text" name="interestRate" value="{{ data.interestRate }}"><br>
+    currencyType: <input type="text" name="currencyType" value="{{ data.currencyType }}"><br>
+    <input type="submit" value="提交">
+</form>
+
+{% endblock %}
