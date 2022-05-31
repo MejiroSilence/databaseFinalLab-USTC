@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>check accounts</h1>
+
+<table border="1">
+    <tr>
+        <th>accountID</th>
+        <th>bankName</th>
+        <th>lastVisit</th>
+        <th>accountBalance</th>
+        <th>accountRegisterDate</th>
+        <th>overdraft</th>
+        <th>操作</th>
+    </tr>
+    {% for item in checkList %}
+        <tr>
+            <td>{{ item.accountID }}</td>
+            <td>{{ item.bankName }}</td>
+            <td>{{ item.lastVisit }}</td>
+            <td>{{ item.accountBalance }}</td>
+            <td>{{ item.accountRegisterDate }}</td>
+            <td>{{ item.overdraft }}</td>
+            <td>
+                <a href="/account/addCustomer/check/{{ item.accountID }}" class="button">添加关联用户</a>
+            </td>
+        </tr>
+    {% endfor %}
+
+</table>
+
+<h1>deposita accounts</h1>
+
+<table border="1">
+    <tr>
+        <th>accountID</th>
+        <th>bankName</th>
+        <th>lastVisit</th>
+        <th>accountBalance</th>
+        <th>accountRegisterDate</th>
+        <th>interestRate</th>
+        <th>currencyType</th>
+        <th>操作</th>
+    </tr>
+    {% for item in depositaList %}
+        <tr>
+            <td>{{ item.accountID }}</td>
+            <td>{{ item.bankName }}</td>
+            <td>{{ item.lastVisit }}</td>
+            <td>{{ item.accountBalance }}</td>
+            <td>{{ item.accountRegisterDate }}</td>
+            <td>{{ item.interestRate }}</td>
+            <td>{{ item.currencyType }}</td>
+            <td>
+                <a href="/account/addCustomer/deposita/{{ item.accountID }}" class="button">添加关联用户</a>
+            </td>
+        </tr>
+    {% endfor %}
+
+</table>
+
+{% endblock %}

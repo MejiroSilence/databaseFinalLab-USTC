@@ -2,6 +2,7 @@ import json
 import traceback
 from flask import render_template, flash, redirect, jsonify, request
 from matplotlib import dviread
+from matplotlib.style import available
 from app import app
 import pymysql
 import datetime, time
@@ -137,14 +138,155 @@ def apiCustomerAdd():
     return redirect("/customer/list")
 
 
-@app.route("/account/addCustomer/<string:ID>", methods=["GET"])
-def accountAddCustomer(ID):  # TODO:
-    return 114514
+@app.route("/account/list/<string:ID>", methods=["GET"])
+def accountList(ID):
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute(
+        "select customerCheck.accountID as accountID, customerCheck.bankName as bankName, lastVisit, accountBalance, accountRegisterDate, overdraft from customerCheck,checkAccount where customerID = %s and customerCheck.accountID = checkAccount.accountID",
+        (ID),
+    )
+    checkData = cursor.fetchall()
+    cursor.execute(
+        "select customerDeposit.accountID as accountID , customerDeposit.bankName as bankName,lastVisit,accountBalance,accountRegisterDate,interestRate,currencyType from customerDeposit,depositaccount where customerID = %s and customerDeposit.accountID = depositaccount.accountID",
+        (ID),
+    )
+    depositaData = cursor.fetchall()
+    cursor.close()
+    db.close()
+    return render_template(
+        "accountList.html", checkList=checkData, depositaList=depositaData
+    )
 
 
 @app.route(
-    "/api/customer/createAccount/<string:ID>", methods=["POST"]
-)  # TODO: redirect add cus
+    "/api/account/addCustomer/<string:accountType>/<string:ID>", methods=["POST"]
+)
+def apiAccountAddCustomer(accountType, ID):
+    if accountType == "check":
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("select bankname from checkAccount where accountID=%s", (ID))
+        bank = cursor.fetchall()[0]["bankname"]
+        dt = datetime.datetime.now()
+        date = dt.strftime("""%Y-%m-%d""")
+        try:
+            cursor.execute(
+                "insert into customerCheck (customerID,bankName,accountID,lastVisit) values(%s,%s,%s,%s)",
+                (request.form["newUser"], bank, ID, date),
+            )
+        except:
+            traceback.print_exc()
+            db.rollback()
+            cursor.close()
+            db.close()
+            flash("error happened when insert")
+            return redirect("/account/addCustomer/{0}/{1}".format(accountType, ID))
+        else:
+            db.commit()
+            flash("successed")
+            cursor.close()
+            db.close()
+            return redirect("/account/addCustomer/{0}/{1}".format(accountType, ID))
+
+    elif accountType == "deposita":
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("select bankname from depositAccount where accountID=%s", (ID))
+        bank = cursor.fetchall()[0]["bankname"]
+        dt = datetime.datetime.now()
+        date = dt.strftime("""%Y-%m-%d""")
+        try:
+            cursor.execute(
+                "insert into customerDeposit (customerID,bankName,accountID,lastVisit) values(%s,%s,%s,%s)",
+                (request.form["newUser"], bank, ID, date),
+            )
+        except:
+            traceback.print_exc()
+            db.rollback()
+            cursor.close()
+            db.close()
+            flash("error happened when insert")
+            return redirect("/account/addCustomer/{0}/{1}".format(accountType, ID))
+        else:
+            db.commit()
+            flash("successed")
+            cursor.close()
+            db.close()
+            return redirect("/account/addCustomer/{0}/{1}".format(accountType, ID))
+
+    else:
+        flash("accountTypeError")
+        return redirect("customer/list")
+
+
+@app.route("/account/addCustomer/<string:accountType>/<string:ID>", methods=["GET"])
+def accountAddCustomer(accountType, ID):
+    if accountType == "check":
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(
+            "select customerCheck.customerID,customerName from customerCheck,customer where accountID=%s and customerCheck.customerID = customer.customerID",
+            (ID),
+        )
+        accountUsers = cursor.fetchall()
+        cursor.execute("select bankname from checkAccount where accountID=%s", (ID))
+        bank = cursor.fetchall()[0]["bankname"]
+        cursor.execute(
+            "select customerID from customer where customerID not in (select customerID from customerCheck where bankName = %s)",
+            (bank),
+        )
+        availableUser = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return render_template(
+            "accountAddCustomer.html",
+            accountUsers=accountUsers,
+            availableUser=availableUser,
+            accountType=accountType,
+            ID=ID,
+        )
+
+    elif accountType == "deposita":
+        db = pymysql.connect(
+            host="localhost", user="root", password="114514", database="banksys"
+        )
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(
+            "select customerdeposit.customerID,customerName from customerdeposit,customer where accountID=%s and customerdeposit.customerID = customer.customerID",
+            (ID),
+        )
+        accountUsers = cursor.fetchall()
+        cursor.execute("select bankname from depositAccount where accountID=%s", (ID))
+        bank = cursor.fetchall()[0]["bankname"]
+        cursor.execute(
+            "select customerID from customer where customerID not in (select customerID from customerdeposit where bankName = %s)",
+            (bank),
+        )
+        availableUser = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return render_template(
+            "accountAddCustomer.html",
+            accountUsers=accountUsers,
+            availableUser=availableUser,
+            accountType=accountType,
+            ID=ID,
+        )
+    else:
+        flash("accountTypeError check your url")
+        return redirect("customer/list")
+
+
+@app.route("/api/customer/createAccount/<string:ID>", methods=["POST"])
 def apiCustomerCreateAccount(ID):
     db = pymysql.connect(
         host="localhost", user="root", password="114514", database="banksys"
@@ -168,7 +310,7 @@ def apiCustomerCreateAccount(ID):
                     sql1 = "insert into checkAccount (accountID , bankName , accountBalance , accountRegisterDate , overdraft) values(%s,%s,%s,%s,%s)"
                     sql2 = "insert into customerCheck (customerID , bankName , accountID , lastVisit) values(%s,%s,%s,%s)"
                     cursor.execute(getRandID)
-                    accountID = str(cursor.fetchall()[0]["random_num"])
+                    accountID = cursor.fetchall()[0]["random_num"]
                     dt = datetime.datetime.now()
                     date = dt.strftime("""%Y-%m-%d""")
                     cursor.execute(
@@ -208,6 +350,7 @@ def apiCustomerCreateAccount(ID):
             db.close()
             flash("no such bank!")
             return redirect("/customer/createAccount/{0}".format(ID))
+
     elif request.form["type"] == "deposita":
         cursor.execute(bankCheck, (request.form["bank"]))
         if cursor.fetchall():
@@ -225,7 +368,7 @@ def apiCustomerCreateAccount(ID):
                     sql1 = "insert into depositAccount (accountID , bankName , accountBalance , accountRegisterDate , interestRate , currencyType) values(%s,%s,%s,%s,%s,%s)"
                     sql2 = "insert into customerDeposit (customerID , bankName , accountID , lastVisit) values(%s,%s,%s,%s)"
                     cursor.execute(getRandID)
-                    accountID = (cursor.fetchall()[0]["random_num"],)
+                    accountID = cursor.fetchall()[0]["random_num"]
                     dt = datetime.datetime.now()
                     date = dt.strftime("""%Y-%m-%d""")
                     cursor.execute(

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>当前账户已关联客户</h1>
+<table border="1">
+    <tr>
+        <th>身份证</th>
+        <th>姓名</th>
+    </tr>
+    {% for item in accountUsers %}
+        <tr>
+            <td>{{ item.customerID }}</td>
+            <td>{{ item.customerName }}</td>
+        </tr>
+    {% endfor %}
+
+</table>
+
+<form action="/api/account/addCustomer/{{ accountType }}/{{ ID }}" method="post">
+
+    <label>新关联客户身份证</label>
+    <select name="newUser">
+        {% for user in availableUser %}
+        <option value="{{ user.customerID }}">{{ user.customerID }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="submit" value="提交">
+</form>
+
+{% endblock %}
