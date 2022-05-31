@@ -38,7 +38,7 @@ drop table if exists server;
 
 create table bank (
     bankName varchar(20) not null,
-    bandCity varchar(20) not null,
+    bankCity varchar(20) not null,
     bankAssets float(16) not null,
     primary key (bankName)
 );

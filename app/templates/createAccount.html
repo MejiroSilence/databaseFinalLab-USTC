@@ -16,10 +16,10 @@
     </select>
 
     <p>If you need to create a check account, please fill out the overdraft bellow.</p>
-    透支额: <input type="text" name="overdraft" placeholder="透支额" pattern="[0-9]+"><br>
+    透支额: <input type="text" name="overdraft" placeholder="透支额" pattern="[0-9]*\.?[0-9]*"><br>
 
     <p>If you need to create a deposita account, please fill out the Interest Rate and Currency Type bellow.</p>
-    利率: <input type="text" name="interestRate" placeholder="利率"><br>
+    利率: <input type="text" name="interestRate" placeholder="利率" pattern="[0-9]*\.?[0-9]*"><br>
     货币类型: <input type="text" name="currencyType" placeholder="货币类型"><br>
 
     <input type="submit" value="提交">

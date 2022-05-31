@@ -7,6 +7,8 @@ import pymysql
 import datetime ,time
 from checks import *
 
+#TODO: check cursor.close db.close for each branch in each func
+
 @app.route('/customer/list', methods = ['GET'])
 def customerList():
     db = pymysql.connect(host='localhost',user='root',password='114514',database='banksys')
@@ -23,18 +25,23 @@ def customerSearch():
 
 @app.route('/api/customer/search',methods=["POST"])#TODO:
 def apiCustomerSearch():
-    return 114
+    db = pymysql.connect(host='localhost',user='root',password='114514',database='banksys')
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    sql='select * from customer where customerID like %s and customerName like %s and customerPhone like %s and customerAdress like %s'
+    customerID='%'
+    customerName='%'
+    customerPhone='%'
+    customerAdress='%'
 
 @app.route("/customer/edit/<string:ID>", methods=["GET"])
 def customerEdit(ID):
-    if request.method == "GET":
-        db = pymysql.connect(host='localhost',user='root',password='114514',database='banksys')
-        cursor = db.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("select * from customer where customerID = '{0}'".format(ID))
-        data=cursor.fetchall()
-        cursor.close()
-        db.close()
-        return render_template('customerEdit.html',customer=data)
+    db = pymysql.connect(host='localhost',user='root',password='114514',database='banksys')
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("select * from customer where customerID = '{0}'".format(ID))
+    data=cursor.fetchall()
+    cursor.close()
+    db.close()
+    return render_template('customerEdit.html',customer=data)
 
 @app.route("/api/customer/edit/<string:ID>",methods=["POST"])
 def apiCustomerEdit(ID):
