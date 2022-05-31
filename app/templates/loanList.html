@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<form method="POST" action="/loan/search">
+    loan ID: <input type="text" name="loanID TODO" value=""><br>
+    <button type="submit">查询</button>
+</form>
+
+<form action="/api/loan/add/" method="post"> 
+    <label>银行</label>
+    <select name="bank">
+        {% for bank in banks %}
+        <option value="{{ bank.bankName }}">{{ bank.bankName }}</option>
+        {% endfor %}
+    </select>
+    金额: <input type="text" name="loanMoney" placeholder="金额"><br>
+    <input type="submit" value="添加">
+</form>
+
+<table border="1">
+    <tr>
+        <th>loan ID</th>
+        <th>bank name</th>
+        <th>loan amount</th>
+        <th>already payed</th>
+        <th>status</th>
+        <th>操作</th>
+    </tr>
+    {% for item in loans %}
+        <tr>
+            <td>{{ item.loanID }}</td>
+            <td>{{ item.bankName }}</td>
+            <td>{{ item.loanMoney }}</td>
+            <td>{{ item.payed }}</td>
+            <td>{{ item.status }}</td>
+            <td>
+                <a href="/loan/{{ item.loanID }}" class="button">datails</a>
+
+                <a href="/loan/createpay" class="button">create paying</a>
+
+                <a href="/loan/delete" class="button">delete</a>
+            </td>
+        </tr>
+    {% endfor %}
+
+</table>
+
+{% endblock %}

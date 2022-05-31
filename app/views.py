@@ -476,7 +476,7 @@ def customerDelete(ID):
 
 
 @app.route("/api/account/deleteCustomer", methods=["POST"])
-def apiAccountDelete():  # TODO:
+def apiAccountDelete():
     json = request.get_json()
     type = json["type"]
     if type == "check":
@@ -700,3 +700,83 @@ def accountSearch():
             flash("error 694")
             return redirect("/account/search")
 
+
+@app.route("/loan/list", methods=["GET"])
+def loadList():
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("select loanID,sum(payMoney) as payed from pay group by loanID")
+    status = cursor.fetchall()
+    cursor.execute("select * from loan")
+    loan = cursor.fetchall()
+    cursor.execute("select bankName from bank")
+    banks = cursor.fetchall()
+    cursor.close()
+    db.close()
+    loanStatus = {}
+    for l in loan:
+        loanStatus[l["loanID"]] = {
+            "loanID": l["loanID"],
+            "bankName": l["bankName"],
+            "loanMoney": l["loanMoney"],
+            "status": "not issued",
+            "payed": 0,
+        }
+    for s in status:
+        loanStatus[s["loanID"]]["payed"] = s["payed"]
+        if s["payed"] == loanStatus[s["loanID"]]["loanMoney"]:
+            loanStatus[s["loanID"]]["status"] = "finished"
+        else:
+            loanStatus[s["loanID"]]["status"] = "issuing"
+
+    return render_template(
+        "loanList.html", loans=list(loanStatus.values()), banks=banks
+    )
+
+
+@app.route("/api/loan/add/", methods=["POST"])
+def apiLoanAdd():
+    try:
+        number = float(request.form["loanMoney"])
+        if number < 0:
+            flash("金额错误")
+            return redirect("/loan/list")
+    except ValueError:
+        flash("金额错误")
+        return redirect("/loan/list")
+
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    try:
+        getRandID = """SELECT random_num
+                                    FROM (
+                                    SELECT FLOOR(RAND() * 999999) AS random_num 
+                                    FROM loan
+                                    UNION
+                                    SELECT FLOOR(RAND() * 999999) AS random_num
+                                    ) AS ss
+                                    WHERE "random_num" NOT IN (SELECT loanID FROM loan)
+                                    LIMIT 1"""
+        cursor.execute(getRandID)
+        newID = cursor.fetchall()[0]["random_num"]
+        cursor.execute(
+            "insert into loan (loanID,bankName,loanMoney) values (%s,%s,%s)",
+            (newID, request.form["bank"], request.form["loanMoney"]),
+        )
+    except:
+        traceback.print_exc()
+        db.rollback()
+        cursor.close()
+        db.close()
+        flash("error 772")
+        return redirect("/loan/list")
+    else:
+        db.commit()
+        cursor.close()
+        db.close()
+        flash("success")
+        return redirect("/loan/list")

@@ -185,9 +185,10 @@ create table loan (
 
 create table pay (
     loanID varchar(20) not null,
+    payID varchar(20) not null,
     payDate date not null,
     payMoney float(16) not null,
-    primary key (loanID)
+    primary key (loanID, payID)
 );
 
 /*==============================================================*/
