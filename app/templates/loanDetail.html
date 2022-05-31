@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<table border="1">
+    <tr>
+        <th>loan ID</th>
+        <th>bank name</th>
+        <th>loan amount</th>
+        <th>already payed</th>
+        <th>status</th>
+        <th>操作</th>
+    </tr>
+    <tr>
+        <td>{{ loan.loanID }}</td>
+        <td>{{ loan.bankName }}</td>
+        <td>{{ loan.loanMoney }}</td>
+        <td>{{ payed }}</td>
+        <td>{{ status }}</td>
+        <td>
+            <a href="/loan/createpay" class="button">createPay</a>
+
+            <a href="/loan/delete" class="button">delete</a>
+        </td>
+    </tr>
+
+</table>
+
+<form action="/loan/createpay/{{ loan.loanID }}" method="post"> 
+    付款金额: <input type="text" name="payMoney" placeholder="金额"><br>
+    <input type="submit" value="添加付款">
+</form>
+
+<table border="1">
+    <tr>
+        <th>payID</th>
+        <th>pay date</th>
+        <th>pay amount</th>
+    </tr>
+    {% for item in pays %}
+        <tr>
+            <td>{{ item.payID }}</td>
+            <td>{{ item.payDate }}</td>
+            <td>{{ item.payMoney }}</td>
+        </tr>
+    {% endfor %}
+
+</table>
+
+{% endblock %}

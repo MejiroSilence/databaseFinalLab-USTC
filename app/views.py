@@ -1,4 +1,5 @@
 import json
+from multiprocessing.dummy import current_process
 import traceback
 from flask import render_template, flash, redirect, jsonify, request
 from matplotlib import dviread
@@ -780,3 +781,35 @@ def apiLoanAdd():
         db.close()
         flash("success")
         return redirect("/loan/list")
+
+
+@app.route("/loan/<string:ID>", methods=["GET"])
+def loanDetail(ID):
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("select * from loan where loanID = %s", (ID))
+    loan = cursor.fetchall()
+    if loan:
+        loan = loan[0]
+        cursor.execute("select * from pay where loanID=%s", (ID))
+        pays = cursor.fetchall()
+        cursor.execute("select sum(payMoney) as payed from pay where loanID=%s", (ID))
+        payed = cursor.fetchall()[0]["payed"]
+        status = "not issued"
+        if payed:
+            status = "issuing"
+            if payed == loan["loanMoney"]:
+                status = "finished"
+        cursor.close()
+        db.close()
+        return render_template(
+            "loanDetail.html", loan=loan, status=status, pays=pays, payed=payed
+        )
+    else:
+        flash("loan ID does not exist")
+        cursor.close()
+        db.close()
+        return redirect("/loan/list")
+
