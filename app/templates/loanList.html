@@ -14,6 +14,12 @@
         <option value="{{ bank.bankName }}">{{ bank.bankName }}</option>
         {% endfor %}
     </select>
+    <label>客户</label>
+    <select name="customerID">
+        {% for customer in customerList %}
+        <option value="{{ customer.customerID }}">{{ customer.customerID }}</option>
+        {% endfor %}
+    </select>
     金额: <input type="text" name="loanMoney" placeholder="金额"><br>
     <input type="submit" value="添加">
 </form>

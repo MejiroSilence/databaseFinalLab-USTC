@@ -6,6 +6,7 @@ import datetime, time
 from checks import *
 
 # TODO: check cursor.close db.close for each branch in each func
+# TODO: last visit
 
 
 @app.route("/", methods=["GET"])
@@ -710,6 +711,8 @@ def loadList():
     loan = cursor.fetchall()
     cursor.execute("select bankName from bank")
     banks = cursor.fetchall()
+    cursor.execute("select customerID from customer")
+    customerList = cursor.fetchall()
     cursor.close()
     db.close()
     loanStatus = {}
@@ -729,7 +732,10 @@ def loadList():
             loanStatus[s["loanID"]]["status"] = "issuing"
 
     return render_template(
-        "loanList.html", loans=list(loanStatus.values()), banks=banks
+        "loanList.html",
+        loans=list(loanStatus.values()),
+        banks=banks,
+        customerList=customerList,
     )
 
 
@@ -748,34 +754,46 @@ def apiLoanAdd():
         host="localhost", user="root", password="114514", database="banksys"
     )
     cursor = db.cursor(pymysql.cursors.DictCursor)
-    try:
-        getRandID = """SELECT random_num
-                                    FROM (
-                                    SELECT FLOOR(RAND() * 999999) AS random_num 
-                                    FROM loan
-                                    UNION
-                                    SELECT FLOOR(RAND() * 999999) AS random_num
-                                    ) AS ss
-                                    WHERE "random_num" NOT IN (SELECT loanID FROM loan)
-                                    LIMIT 1"""
-        cursor.execute(getRandID)
-        newID = cursor.fetchall()[0]["random_num"]
-        cursor.execute(
-            "insert into loan (loanID,bankName,loanMoney) values (%s,%s,%s)",
-            (newID, request.form["bank"], request.form["loanMoney"]),
-        )
-    except:
-        traceback.print_exc()
-        db.rollback()
-        cursor.close()
-        db.close()
-        flash("error 772")
-        return redirect("/loan/list")
+    cusID = request.form["customerID"]
+    cursor.execute("select customerID from customer where customerID=%s", (cusID))
+    if cursor.fetchall():
+        try:
+            getRandID = """SELECT random_num
+                                        FROM (
+                                        SELECT FLOOR(RAND() * 999999) AS random_num 
+                                        FROM loan
+                                        UNION
+                                        SELECT FLOOR(RAND() * 999999) AS random_num
+                                        ) AS ss
+                                        WHERE "random_num" NOT IN (SELECT loanID FROM loan)
+                                        LIMIT 1"""
+            cursor.execute(getRandID)
+            newID = cursor.fetchall()[0]["random_num"]
+            cursor.execute(
+                "insert into loan (loanID,bankName,loanMoney) values (%s,%s,%s)",
+                (newID, request.form["bank"], request.form["loanMoney"]),
+            )
+            cursor.execute(
+                "insert into belongto (customerID,loanID) values (%s,%s)",
+                (cusID, newID),
+            )
+        except:
+            traceback.print_exc()
+            db.rollback()
+            cursor.close()
+            db.close()
+            flash("error 772")
+            return redirect("/loan/list")
+        else:
+            db.commit()
+            cursor.close()
+            db.close()
+            flash("success")
+            return redirect("/loan/list")
     else:
-        db.commit()
         cursor.close()
         db.close()
-        flash("success")
+        flash("customer ID not exists")
         return redirect("/loan/list")
 
 
@@ -798,6 +816,13 @@ def loanDetail(ID):
             status = "issuing"
             if payed == loan["loanMoney"]:
                 status = "finished"
+        else:
+            payed = "0"
+        cursor.execute(
+            "select belongto.customerID,customerName from belongto,customer where loanID=%s and belongto.customerID=customer.customerID",
+            (ID),
+        )
+        cus = cursor.fetchall()
         cursor.close()
         db.close()
         left = float(loan["loanMoney"]) - float(payed)
@@ -808,6 +833,7 @@ def loanDetail(ID):
             pays=pays,
             payed=payed,
             left=left,
+            customerList=cus,
         )
     else:
         flash("loan ID does not exist")
@@ -840,7 +866,8 @@ def loanDelete(ID):
             return redirect("/loan/{0}".format(ID))
         else:
             try:
-                cursor.delete("delete from pay where loanID=%s", (ID))
+                cursor.execute("delete from pay where loanID=%s", (ID))
+                cursor.execute("delete from belongto where loanID=%s", (ID))
                 cursor.execute("delete from loan where loanID=%s", (ID))
             except:
                 db.rollback()
@@ -893,7 +920,10 @@ def apiLoanCreatePay(ID):
         loan = loan[0]
         cursor.execute("select sum(payMoney) as payed from pay where loanID=%s", (ID))
         payed = cursor.fetchall()[0]["payed"]
-        payedNum = float(payed)
+        if payed:
+            payedNum = float(payed)
+        else:
+            payedNum = 0.0
         allNum = float(loan["loanMoney"])
         if payedNum + newPayNum > allNum:
             flash("金额溢出")
