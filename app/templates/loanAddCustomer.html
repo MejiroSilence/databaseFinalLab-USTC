@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>当前贷款已关联用户</h1>
+<table border="1">
+    <tr>
+        <th>loan ID</th>
+        <th>bank name</th>
+        <th>loan amount</th>
+        <th>already payed</th>
+        <th>status</th>
+        <th>操作</th>
+    </tr>
+    {% for item in loans %}
+        <tr>
+            <td>{{ item.loanID }}</td>
+            <td>{{ item.bankName }}</td>
+            <td>{{ item.loanMoney }}</td>
+            <td>{{ item.payed }}</td>
+            <td>{{ item.status }}</td>
+            <td>
+                <a href="/loan/{{ item.loanID }}" class="button">datails</a>
+
+                <a href="/loan/delete/{{ item.loanID }}" class="button">delete</a>
+            </td>
+        </tr>
+    {% endfor %}
+
+</table>
+
+{% endblock %}

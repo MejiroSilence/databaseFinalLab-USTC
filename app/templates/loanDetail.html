@@ -24,14 +24,32 @@
 
 </table>
 
+<form action="/api/loan/addCustomer/{{ loan.loanID }}" method="post">
+
+    <label>关联新客户</label>
+    <select name="newUser">
+        {% for user in availableCus %}
+        <option value="{{ user.customerID }}">{{ user.customerName }}: {{ user.customerID }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="submit" value="提交">
+</form>
+<h1>已关联用户</h1>
 <table border="1">
     <tr>
         <th>customer ID</th>
         <th>customer name</th>
+        <th>操作</th>
     </tr>
     {% for item in customerList %}
-    <td>{{ item.customerID }}</td>
-    <td>{{ item.customerName }}</td>
+    <tr>
+        <td>{{ item.customerID }}</td>
+        <td>{{ item.customerName }}</td>
+        <td>
+            <input type="button" name="delete" value="取消关联" onclick="delete1( &quot;{{ loan.loanID }}&quot; , &quot;{{ item.customerID }}&quot; )"/>
+        </td>
+    </tr>
     {% endfor %}
 </table>
 
@@ -55,5 +73,18 @@
     {% endfor %}
 
 </table>
+
+<script language="javascript">    
+    function delete1(ID_,CustomerID_,){
+    var httpRequest = new XMLHttpRequest();
+    httpRequest.open('POST', '/api/loan/deleteCustomer/', true);
+    httpRequest.setRequestHeader("Content-type","application/json");
+    var obj = {ID: ID_, cus: CustomerID_ };
+    httpRequest.send(JSON.stringify(obj));
+    httpRequest.onreadystatechange = function () {//请求后的回调接口，可将请求成功后要执行的程序写在其中
+        location.reload();
+    };
+    };
+    </script>
 
 {% endblock %}

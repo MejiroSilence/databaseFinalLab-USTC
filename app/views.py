@@ -823,6 +823,11 @@ def loanDetail(ID):
             (ID),
         )
         cus = cursor.fetchall()
+        cursor.execute(
+            "select customerID,customerName from customer where customerID not in(select customerID from belongto where loanID=%s)",
+            (ID),
+        )
+        availableCus = cursor.fetchall()
         cursor.close()
         db.close()
         left = float(loan["loanMoney"]) - float(payed)
@@ -834,6 +839,7 @@ def loanDetail(ID):
             payed=payed,
             left=left,
             customerList=cus,
+            availableCus=availableCus,
         )
     else:
         flash("loan ID does not exist")
@@ -962,4 +968,92 @@ def apiLoanCreatePay(ID):
     else:
         flash("no such loan id")
         return redirect("/loan/list")
+
+
+@app.route("/api/loan/addCustomer/<string:ID>", methods=["POST"])
+def loanAddCustomer(ID):
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("select * from loan where loanID=%s", (ID))
+    loan = cursor.fetchall()
+    if not loan:
+        flash("loan id not exist")
+        return redirect("/loan/list")
+    loan = loan[0]
+    cursor.execute("select sum(payMoney) as payed from pay where loanID=%s", (ID))
+    payed = cursor.fetchall()[0]["payed"]
+    status = "not issued"
+    if payed:
+        status = "issuing"
+        if payed == loan["loanMoney"]:
+            status = "finished"
+    if status == "issuing" or status == "finished":
+        cursor.close()
+        db.close()
+        flash("this loan is issuing or finished, can not be edited")
+        return redirect("/loan/{0}".format(ID))
+    try:
+        cursor.execute(
+            "insert into belongto (customerID,loanID) values (%s,%s)",
+            (request.form["newUser"], ID),
+        )
+    except:
+        db.rollback()
+        flash(
+            "error 1005: maybe this loan had already connected to this customer, or customer not exits"
+        )
+    else:
+        db.commit()
+        flash("success")
+    cursor.close()
+    db.close()
+    return redirect("/loan/{0}".format(ID))
+
+
+@app.route("/api/loan/deleteCustomer/", methods=["POST"])
+def apiLoanDeleteCustomer():
+    json = request.get_json()
+    ID = json["ID"]
+    cus = json["cus"]
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("select * from loan where loanID=%s", (ID))
+    loan = cursor.fetchall()
+    if not loan:
+        flash("loan id not exist")
+        return {"code": 1028}
+    loan = loan[0]
+    cursor.execute("select sum(payMoney) as payed from pay where loanID=%s", (ID))
+    payed = cursor.fetchall()[0]["payed"]
+    status = "not issued"
+    if payed:
+        status = "issuing"
+        if payed == loan["loanMoney"]:
+            status = "finished"
+    if status == "issuing" or status == "finished":
+        cursor.close()
+        db.close()
+        flash("this loan is issuing or finished, can not be edited")
+        return {"code": 1041}
+    try:
+        cursor.execute(
+            "delete from belongto where loanID=%s and customerID=%s", (ID, cus)
+        )
+        cursor.execute("select * from belongto where loanID=%s", (ID))
+        if not cursor.fetchall():
+            cursor.execute("delete from loan where loanID=%s", (ID))
+    except:
+        traceback.print_exc()
+        flash("error 1047")
+        db.rollback()
+    else:
+        flash("success")
+        db.commit()
+    cursor.close()
+    db.close()
+    return {"code": 1057}
 
