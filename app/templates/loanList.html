@@ -2,8 +2,8 @@
 
 {% block content %}
 
-<form method="POST" action="/loan/search">
-    loan ID: <input type="text" name="loanID TODO" value=""><br>
+<form method="POST" action="/api/loan/search">
+    loan ID: <input type="text" name="loanID" value=""><br>
     <button type="submit">查询</button>
 </form>
 
@@ -37,7 +37,7 @@
             <td>
                 <a href="/loan/{{ item.loanID }}" class="button">datails</a>
 
-                <a href="/loan/delete" class="button">delete</a>
+                <a href="/loan/delete/{{ item.loanID }}" class="button">delete</a>
             </td>
         </tr>
     {% endfor %}

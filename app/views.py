@@ -1,9 +1,5 @@
-import json
-from multiprocessing.dummy import current_process
 import traceback
 from flask import render_template, flash, redirect, jsonify, request
-from matplotlib import dviread
-from matplotlib.style import available
 from app import app
 import pymysql
 import datetime, time
@@ -804,12 +800,136 @@ def loanDetail(ID):
                 status = "finished"
         cursor.close()
         db.close()
+        left = float(loan["loanMoney"]) - float(payed)
         return render_template(
-            "loanDetail.html", loan=loan, status=status, pays=pays, payed=payed
+            "loanDetail.html",
+            loan=loan,
+            status=status,
+            pays=pays,
+            payed=payed,
+            left=left,
         )
     else:
         flash("loan ID does not exist")
         cursor.close()
         db.close()
+        return redirect("/loan/list")
+
+
+@app.route("/loan/delete/<string:ID>", methods=["GET", "POST"])
+def loanDelete(ID):
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("select * from loan where loanID = %s", (ID))
+    loan = cursor.fetchall()
+    if loan:
+        loan = loan[0]
+        cursor.execute("select sum(payMoney) as payed from pay where loanID=%s", (ID))
+        payed = cursor.fetchall()[0]["payed"]
+        status = "not issued"
+        if payed:
+            status = "issuing"
+            if payed == loan["loanMoney"]:
+                status = "finished"
+        if status == "issuing":
+            cursor.close()
+            db.close()
+            flash("this loan is issuing, can not be deleted")
+            return redirect("/loan/{0}".format(ID))
+        else:
+            try:
+                cursor.delete("delete from pay where loanID=%s", (ID))
+                cursor.execute("delete from loan where loanID=%s", (ID))
+            except:
+                db.rollback()
+                flash("error 846")
+                cursor.close()
+                db.close()
+                return redirect("/loan/list")
+            else:
+                db.commit()
+                cursor.close()
+                db.close()
+                flash("success")
+                return redirect("/loan/list")
+
+    else:
+        flash("loan ID does not exist")
+        cursor.close()
+        db.close()
+        return redirect("/loan/list")
+
+
+@app.route("/api/loan/search", methods=["POST"])
+def apiLoanSearch():
+    ID = request.form["loanID"]
+    if ID:
+        return redirect("/loan/{0}".format(ID))
+    else:
+        flash("ID can be NULL")
+        return redirect("/loan/list")
+
+
+@app.route("/api/loan/createpay/<string:ID>", methods=["POST"])
+def apiLoanCreatePay(ID):
+    newPay = request.form["payMoney"]
+    try:
+        newPayNum = float(newPay)
+        if newPayNum <= 0:
+            flash("金额必须大于0")
+            return redirect("/loan/{0}".format(ID))
+    except:
+        flash("金额必须是数字")
+        return redirect("/loan/{0}".format(ID))
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("select * from loan where loanID = %s", (ID))
+    loan = cursor.fetchall()
+    if loan:
+        loan = loan[0]
+        cursor.execute("select sum(payMoney) as payed from pay where loanID=%s", (ID))
+        payed = cursor.fetchall()[0]["payed"]
+        payedNum = float(payed)
+        allNum = float(loan["loanMoney"])
+        if payedNum + newPayNum > allNum:
+            flash("金额溢出")
+            return redirect("/loan/{0}".format(ID))
+        getRandID = """SELECT random_num
+                                    FROM (
+                                    SELECT FLOOR(RAND() * 999999) AS random_num 
+                                    FROM pay
+                                    UNION
+                                    SELECT FLOOR(RAND() * 999999) AS random_num
+                                    ) AS ss
+                                    WHERE "random_num" NOT IN (SELECT payID FROM pay)
+                                    LIMIT 1"""
+        cursor.execute(getRandID)
+        newID = cursor.fetchall()[0]["random_num"]
+        dt = datetime.datetime.now()
+        date = dt.strftime("""%Y-%m-%d""")
+        try:
+            cursor.execute(
+                "insert into pay (loanID,payID,payDate,payMoney) values(%s,%s,%s,%s)",
+                (ID, newID, date, newPay),
+            )
+        except:
+            traceback.print_exc()
+            db.rollback()
+            cursor.close()
+            db.close()
+            flash("error 921")
+            return redirect("/loan/{0}".format(ID))
+        else:
+            db.commit()
+            cursor.close()
+            db.close()
+            flash("success")
+            return redirect("/loan/{0}".format(ID))
+    else:
+        flash("no such loan id")
         return redirect("/loan/list")
 
