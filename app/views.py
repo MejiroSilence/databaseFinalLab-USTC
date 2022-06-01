@@ -1058,10 +1058,8 @@ def apiLoanDeleteCustomer():
     return {"code": 1057}
 
 
-@app.route("/business/balance", methods=["GET"])
-def businessMonth():
-    dt = datetime.datetime.now()
-    date = dt.strftime("""%Y-%m-%d""")
+@app.route("/business", methods=["GET"])
+def business():
     db = pymysql.connect(
         host="localhost", user="root", password="114514", database="banksys"
     )
@@ -1086,8 +1084,58 @@ def businessMonth():
     bankBalanceList = []
     for key in bankBalance.keys():
         bankBalanceList.append({"bankName": key, "balance": bankBalance[key]})
+
+    cursor.execute("select * from loan")
+    loans = cursor.fetchall()
+    bankLoan = {}
+    for bank in banks:
+        bankLoan[bank["bankName"]] = 0.0
+    for item in loans:
+        bankLoan[item["bankName"]] += float(item["loanMoney"])
+    bankLoanList = []
+    for key in bankLoan.keys():
+        bankLoanList.append({"bankName": key, "loan": bankLoan[key]})
     cursor.close()
     db.close()
-    print(bankBalanceList)
-    return render_template("businessBalance.html", bankBalance=bankBalanceList)
+
+    return render_template(
+        "business.html", bankBalance=bankBalanceList, bankLoan=bankLoanList
+    )
+
+
+@app.route("/business/pay", methods=["GET"])
+def businessPay():
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute(
+        "select DATE_FORMAT(payDate,'%Y%m') months,sum(payMoney) as sum from pay group by months;"
+    )
+    monthly = cursor.fetchall()
+    cursor.execute(
+        """
+                        SELECT FLOOR((DATE_FORMAT(paydate,'%m')-1)/3)+1 as q,min(paydate) as st,sum(payMoney) as sum
+                        FROM pay
+                        WHERE DATE_FORMAT(paydate,'%Y') = 2022
+                        GROUP BY FLOOR((DATE_FORMAT(paydate,'%m')-1)/3)+1
+                        ORDER BY q asc;
+        """
+    )
+    quarter = cursor.fetchall()
+    cursor.execute(
+        """
+                        SELECT DATE_FORMAT(payDate,'%Y') as y,sum(payMoney) as sum
+                        FROM pay
+                        GROUP BY DATE_FORMAT(payDate,'%Y')
+                        ORDER BY y asc;
+        """
+    )
+    yearly = cursor.fetchall()
+    cursor.close()
+    db.close()
+
+    return render_template(
+        "businessPay.html", monthly=monthly, quarter=quarter, yearly=yearly
+    )
 
