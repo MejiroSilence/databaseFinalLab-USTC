@@ -11,7 +11,7 @@ from checks import *
 
 @app.route("/", methods=["GET"])
 def index():
-    return redirect("/customer/list")
+    return render_template("index.html")
 
 
 @app.route("/customer/list", methods=["GET"])
