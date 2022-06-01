@@ -1057,3 +1057,37 @@ def apiLoanDeleteCustomer():
     db.close()
     return {"code": 1057}
 
+
+@app.route("/business/balance", methods=["GET"])
+def businessMonth():
+    dt = datetime.datetime.now()
+    date = dt.strftime("""%Y-%m-%d""")
+    db = pymysql.connect(
+        host="localhost", user="root", password="114514", database="banksys"
+    )
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute(
+        "SELECT bankName, sum(accountBalance)as balance from checkaccount GROUP BY bankName"
+    )
+    check = cursor.fetchall()
+    cursor.execute(
+        "SELECT bankName, sum(accountBalance)as balance from depositaccount GROUP BY bankName"
+    )
+    deposita = cursor.fetchall()
+    cursor.execute("select bankName from bank")
+    banks = cursor.fetchall()
+    bankBalance = {}
+    for bank in banks:
+        bankBalance[bank["bankName"]] = 0.0
+    for item in check:
+        bankBalance[item["bankName"]] += float(item["balance"])
+    for item in deposita:
+        bankBalance[item["bankName"]] += float(item["balance"])
+    bankBalanceList = []
+    for key in bankBalance.keys():
+        bankBalanceList.append({"bankName": key, "balance": bankBalance[key]})
+    cursor.close()
+    db.close()
+    print(bankBalanceList)
+    return render_template("businessBalance.html", bankBalance=bankBalanceList)
+
