@@ -62,7 +62,7 @@ def customerEdit(ID):
         host="localhost", user="root", password="114514", database="banksys"
     )
     cursor = db.cursor(pymysql.cursors.DictCursor)
-    cursor.execute("select * from customer where customerID = '{0}'".format(ID))
+    cursor.execute("select * from customer where customerID = %s", (ID))
     data = cursor.fetchall()
     cursor.close()
     db.close()
